@@ -2,7 +2,7 @@
 
 **Mint your art, powered by Zero-Knowledge.**
 
-A privacy-first NFT minting tool for artists. ZKmint combines zkLogin authentication with NFT minting capabilities on the Sui blockchain, allowing users to authenticate using Google OAuth and mint photo NFTs without needing to manage private keys directly.
+A privacy-first NFT minting tool for artists. ZKmint combines zkLogin authentication with NFT minting capabilities on the Sui blockchain, allowing users to authenticate using Google OAuth and mint photo NFTs instantly. No private key management, just art.
 
 ## 🚀 Features
 
