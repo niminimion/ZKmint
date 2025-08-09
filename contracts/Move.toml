@@ -1,0 +1,9 @@
+[package]
+name = "custom_nft"
+version = "1.0.0"
+edition = "2024.beta"
+
+[dependencies]
+
+[addresses]
+custom_nft = "0x0"

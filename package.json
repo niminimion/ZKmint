@@ -1,0 +1,34 @@
+{
+  "name": "zklogin-sdk-implementation",
+  "version": "1.0.0",
+  "description": "zkLogin implementation using official Mysten Labs SDK",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "server": "node server.js",
+    "test": "node test.js",
+    "demo": "node index.js"
+  },
+  "dependencies": {
+    "@mysten/enoki": "^0.11.5",
+    "@mysten/sui": "^1.0.0",
+    "axios": "^1.11.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jose": "^5.2.0",
+    "multer": "^2.0.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "zklogin",
+    "sui",
+    "authentication",
+    "zero-knowledge"
+  ],
+  "author": "",
+  "license": "MIT"
+}

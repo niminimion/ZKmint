@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zkLogin NFT Minter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .google-signin {
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 10px rgba(66, 133, 244, 0.3);
+        }
+
+        .google-signin:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4);
+        }
+
+        .google-signin:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .main-container {
+            padding-top: 80px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            gap: 20px;
+            padding: 100px 30px 20px 100px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: all 0.3s ease;
+            width: 280px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-info.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        @media (max-width: 1200px) {
+            .user-info {
+                width: 100%;
+                max-width: 600px;
+                margin-bottom: 30px;
+                transform: translateY(-20px);
+            }
+            
+            .user-info.show {
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-greeting {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-align: center;
+            color: #ffffff;
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.9);
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .info-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .info-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .info-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .info-item:hover::before {
+            left: 100%;
+        }
+
+        .info-icon {
+            font-size: 20px;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            color: #ffffff;
+            font-weight: 600;
+            word-break: break-all;
+            line-height: 1.4;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 8px;
+            padding: 4px 8px;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .copyable {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mint-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            flex: 1;
+            max-width: 500px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (max-width: 1200px) {
+            .mint-container {
+                width: 100%;
+                max-width: 600px;
+            }
+        }
+
+        .nft-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            flex: 1;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+        }
+
+        .nft-container.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        @media (max-width: 1200px) {
+            .nft-container {
+                width: 100%;
+                max-width: 600px;
+                margin-top: 30px;
+                transform: translateY(20px);
+            }
+            
+            .nft-container.show {
+                transform: translateY(0);
+            }
+        }
+
+        .mint-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #ffffff;
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.9);
+        }
+
+        .mint-subtitle {
+            color: #ffffff;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .upload-area {
+            border: 3px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            margin-bottom: 15px;
+        }
+
+        .upload-area:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .upload-area.dragover {
+            border-color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #ffffff;
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .upload-hint {
+            color: #ffffff;
+            font-size: 14px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            margin-bottom: 15px;
+        }
+
+        .upload-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .upload-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #ffffff;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            font-weight: 600;
+        }
+
+        .upload-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .camera-btn {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .camera-btn:hover {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        #cameraVideo {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .camera-control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #ffffff;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            font-weight: 600;
+        }
+
+        .camera-control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .capture-btn {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: rgba(76, 175, 80, 0.5);
+        }
+
+        .capture-btn:hover {
+            background: rgba(76, 175, 80, 0.5);
+        }
+
+        .image-preview {
+            margin-bottom: 25px;
+            display: none;
+            position: relative;
+        }
+
+        .preview-img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .remove-image-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .remove-image-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            color: #ff4444;
+            transform: scale(1.1);
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #ffffff;
+            font-size: 14px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .mint-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 18px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .mint-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .mint-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+            display: block;
+        }
+
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            display: block;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            display: block;
+        }
+
+        .status.warning {
+            background: #fff3e0;
+            color: #f57c00;
+            display: block;
+            border-left: 4px solid #ff9800;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .transaction-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .transaction-link:hover {
+            text-decoration: underline;
+        }
+
+        /* NFT Gallery Styles */
+        .nft-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .nft-title {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #ffffff;
+            padding: 8px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .asset-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .asset-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .asset-icon {
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .asset-info {
+            flex: 1;
+        }
+
+        .asset-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 2px;
+        }
+
+        .asset-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .nft-gallery {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .nft-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nft-item:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .nft-image {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .nft-info {
+            flex: 1;
+        }
+
+        .nft-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 2px;
+        }
+
+        .nft-description {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .nft-name {
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .nft-id {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 9px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .loading-nfts {
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .no-nfts {
+            color: rgba(255, 255, 255, 0.6);
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        /* NFT Modal Styles */
+        .nft-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .nft-modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .nft-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .nft-modal-image {
+            width: 100%;
+            max-height: 250px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .nft-modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .nft-modal-description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .nft-modal-details {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 12px;
+        }
+
+        .nft-detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .nft-detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .nft-detail-value {
+            color: #666;
+            word-break: break-all;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
+
+            .logo {
+                font-size: 20px;
+            }
+
+            .google-signin {
+                padding: 10px 20px;
+                font-size: 13px;
+            }
+
+            .main-container {
+                padding: 100px 15px 20px;
+            }
+
+            .mint-container {
+                padding: 30px 20px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .user-greeting {
+                font-size: 1.5rem;
+            }
+
+            .nft-gallery {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 10px;
+            }
+
+            .nft-modal-content {
+                padding: 20px;
+                margin: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">🎨 zkLogin NFT</div>
+        <button id="googleSignIn" class="google-signin">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Sign in with Google
+        </button>
+    </header>
+
+    <main class="main-container">
+        <div id="userInfo" class="user-info">
+            <h3 id="userGreeting" class="user-greeting">👤 User Information</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-icon">💼</div>
+                    <div class="info-label">Wallet Address</div>
+                    <div class="info-value copyable">
+                        <span id="walletAddress">Not connected</span>
+                        <button class="copy-btn" onclick="copyToClipboard('walletAddress')" style="display: none;" id="copyWallet">📋</button>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">📧</div>
+                    <div class="info-label">User Email</div>
+                    <div class="info-value" id="userEmail">Not available</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">🔗</div>
+                    <div class="info-label">Last Transaction</div>
+                    <div class="info-value copyable">
+                        <span id="lastTransaction">No transactions yet</span>
+                        <button class="copy-btn" onclick="copyToClipboard('lastTransaction')" style="display: none;" id="copyTransaction">📋</button>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">✅</div>
+                    <div class="info-label">Session Status</div>
+                    <div class="info-value" id="sessionStatus">Connected</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mint-container">
+            <h1 class="mint-title">🎨 Mint Your NFT</h1>
+            <p class="mint-subtitle">Upload an image and create your unique NFT on Sui blockchain</p>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">Click to upload or drag and drop</div>
+                <div class="upload-hint">PNG, JPG, GIF up to 5MB</div>
+                <div class="upload-buttons">
+                    <button class="upload-btn" id="fileUploadBtn">📁 Choose File</button>
+                    <button class="upload-btn camera-btn" id="cameraBtn">📷 Take Photo</button>
+                </div>
+            </div>
+
+            <input type="file" id="fileInput" accept="image/*">
+            <video id="cameraVideo" style="display: none;" autoplay></video>
+            <canvas id="cameraCanvas" style="display: none;"></canvas>
+
+            <div class="image-preview" id="imagePreview">
+                <img id="previewImg" class="preview-img" alt="Preview">
+                <button class="remove-image-btn" id="removeImageBtn" onclick="removeImage()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="input-group">
+                <label for="nftName">NFT Name</label>
+                <input type="text" id="nftName" placeholder="Enter NFT name" maxlength="50">
+            </div>
+
+            <div class="input-group">
+                <label for="nftDescription">Description</label>
+                <input type="text" id="nftDescription" placeholder="Describe your NFT" maxlength="200">
+            </div>
+
+            <button id="mintBtn" class="mint-btn" disabled>
+                🚀 Mint NFT (Gas Sponsored)
+            </button>
+
+            <div id="status" class="status"></div>
+        </div>
+
+        <div class="nft-container" id="nftContainer">
+            <h4 class="nft-title">💰 Assets</h4>
+            <div class="asset-item sui-balance-item">
+                <div class="asset-icon">💰</div>
+                <div class="asset-info">
+                    <div class="asset-label">SUI Balance</div>
+                    <div class="asset-value" id="suiBalanceAsset">Loading...</div>
+                </div>
+            </div>
+            <button class="refresh-btn" onclick="refreshAssets()" id="refreshAssets">🔄 Refresh Assets</button>
+            <div class="nft-gallery" id="nftGallery">
+                <div class="loading-nfts">Loading NFTs...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- NFT Details Modal -->
+    <div id="nftModal" class="nft-modal" style="display: none;">
+        <div class="nft-modal-content">
+            <span class="nft-modal-close" onclick="closeNFTModal()">&times;</span>
+            <img id="modalNFTImage" class="nft-modal-image" alt="NFT Image">
+            <h3 id="modalNFTName" class="nft-modal-title">NFT Name</h3>
+            <p id="modalNFTDescription" class="nft-modal-description">NFT Description</p>
+            <div class="nft-modal-details">
+                <div class="nft-detail-row">
+                    <span class="nft-detail-label">Object ID:</span>
+                    <span id="modalNFTId" class="nft-detail-value">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let sessionId = null;
+        let sessionData = {};
+        let selectedFile = null;
+        let cameraStream = null;
+        let isCameraActive = false;
+
+        // DOM elements
+        const googleSignInBtn = document.getElementById('googleSignIn');
+        const userInfo = document.getElementById('userInfo');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const nftNameInput = document.getElementById('nftName');
+        const nftDescriptionInput = document.getElementById('nftDescription');
+        const mintBtn = document.getElementById('mintBtn');
+        const statusDiv = document.getElementById('status');
+        const cameraVideo = document.getElementById('cameraVideo');
+        const cameraCanvas = document.getElementById('cameraCanvas');
+
+        // Initialize
+        window.addEventListener('load', () => {
+            checkAuthStatus();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            googleSignInBtn.addEventListener('click', handleAuthButtonClick);
+            document.getElementById('fileUploadBtn').addEventListener('click', () => fileInput.click());
+            document.getElementById('cameraBtn').addEventListener('click', handleCameraClick);
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+            mintBtn.addEventListener('click', handleMint);
+            
+            // Enable mint button when all fields are filled
+            [nftNameInput, nftDescriptionInput].forEach(input => {
+                input.addEventListener('input', checkMintButtonState);
+            });
+        }
+
+        function handleAuthButtonClick() {
+            if (sessionId) {
+                handleLogout();
+            } else {
+                handleGoogleSignIn();
+            }
+        }
+
+        function handleLogout() {
+            // Clear all stored data
+            sessionId = null;
+            localStorage.removeItem('zklogin_session_id');
+            localStorage.removeItem('zklogin_user_data');
+            sessionStorage.removeItem('zklogin_jwt');
+            sessionStorage.removeItem('zklogin_state');
+            
+            // Reset UI
+            googleSignInBtn.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Sign in with Google
+            `;
+            googleSignInBtn.disabled = false;
+            
+            // Hide user info
+            userInfo.classList.remove('show');
+            
+            // Reset greeting
+            document.getElementById('userGreeting').textContent = '👤 User Information';
+            
+            // Reset form
+            resetForm();
+            
+            // Hide copy buttons and NFT section
+            document.getElementById('copyWallet').style.display = 'none';
+            document.getElementById('copyTransaction').style.display = 'none';
+            document.getElementById('nftContainer').classList.remove('show');
+            
+            showStatus('Signed out successfully', 'success');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showStatus('Please select an image file', 'error');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                showStatus('File size must be less than 5MB', 'error');
+                return;
+            }
+
+            selectedFile = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+                uploadArea.style.display = 'none';
+                checkMintButtonState();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function checkMintButtonState() {
+            const hasFile = selectedFile !== null;
+            const hasName = nftNameInput.value.trim() !== '';
+            const hasDescription = nftDescriptionInput.value.trim() !== '';
+            const isAuthenticated = sessionId !== null;
+
+            mintBtn.disabled = !(hasFile && hasName && hasDescription && isAuthenticated);
+        }
+
+        async function handleGoogleSignIn() {
+            try {
+                showStatus('Initializing zkLogin session...', 'loading');
+                googleSignInBtn.disabled = true;
+
+                // Initialize session
+                const initResponse = await fetch('/api/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const initData = await initResponse.json();
+                
+                if (!initData.success) {
+                    throw new Error(initData.error);
+                }
+
+                sessionId = initData.sessionId;
+                showStatus('Generating keys...', 'loading');
+
+                // Generate keys
+                const keysResponse = await fetch('/api/generate-keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                const keysData = await keysResponse.json();
+
+                if (!keysData.success) {
+                    throw new Error(keysData.error);
+                }
+
+                sessionData = { ...sessionData, ...keysData };
+                showStatus('Redirecting to Google...', 'loading');
+
+                // Redirect to OAuth
+                window.location.href = keysData.oauthUrl;
+
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                googleSignInBtn.disabled = false;
+            }
+        }
+
+        async function checkAuthStatus() {
+            // Check if we're returning from OAuth callback (JWT in sessionStorage)
+            const jwt = sessionStorage.getItem('zklogin_jwt');
+            const state = sessionStorage.getItem('zklogin_state');
+
+            if (jwt && state) {
+                sessionId = state;
+                await processJWT(jwt);
+                // Clean sessionStorage
+                sessionStorage.removeItem('zklogin_jwt');
+                sessionStorage.removeItem('zklogin_state');
+                return;
+            }
+
+            // Check if we have a stored session
+            const storedSessionId = localStorage.getItem('zklogin_session_id');
+            const storedUserData = localStorage.getItem('zklogin_user_data');
+            
+            if (storedSessionId && storedUserData) {
+                try {
+                    sessionId = storedSessionId;
+                    const userData = JSON.parse(storedUserData);
+                    updateUserInfo(userData);
+                    
+                    // Show copy button for wallet address if available
+                    if (userData.userAddress) {
+                        document.getElementById('copyWallet').style.display = 'inline-block';
+                        
+                        // Fetch and display SUI balance
+                        fetchSuiBalance(userData.userAddress);
+                        
+                        // Show NFT section and load NFTs
+                        document.getElementById('nftContainer').classList.add('show');
+                        loadUserNFTs();
+                    }
+                    
+                    // Check if there's a stored transaction and show copy button
+                    const lastTx = document.getElementById('lastTransaction').textContent;
+                    if (lastTx && lastTx !== 'No transactions yet') {
+                        document.getElementById('copyTransaction').style.display = 'inline-block';
+                    }
+                    
+                    googleSignInBtn.innerHTML = '🚪 Sign Out';
+                    googleSignInBtn.disabled = false;
+                    checkMintButtonState();
+                    showStatus('Welcome back!', 'success');
+                } catch (error) {
+                    // Clear invalid stored data
+                    localStorage.removeItem('zklogin_session_id');
+                    localStorage.removeItem('zklogin_user_data');
+                }
+            }
+        }
+
+        async function processJWT(jwt) {
+            try {
+                showStatus('Processing authentication...', 'loading');
+
+                // Process JWT
+                const jwtResponse = await fetch('/api/process-jwt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        sessionId,
+                        jwt: jwt
+                    })
+                });
+                const jwtData = await jwtResponse.json();
+
+                if (!jwtData.success) {
+                    throw new Error(jwtData.error);
+                }
+
+                // Store session data
+                localStorage.setItem('zklogin_session_id', sessionId);
+                localStorage.setItem('zklogin_user_data', JSON.stringify(jwtData));
+
+                // Update UI
+                updateUserInfo(jwtData);
+                showStatus('Authentication successful!', 'success');
+                googleSignInBtn.innerHTML = '🚪 Sign Out';
+                googleSignInBtn.disabled = false;
+                checkMintButtonState();
+
+            } catch (error) {
+                showStatus(`Authentication error: ${error.message}`, 'error');
+                console.error('JWT processing error:', error);
+            }
+        }
+
+        function updateUserInfo(data) {
+            userInfo.classList.add('show');
+            
+            // Update greeting with user name
+            const userEmail = data.jwtClaims?.email || 'User';
+            const userName = userEmail.split('@')[0];
+            document.getElementById('userGreeting').textContent = `Hello, ${userName}! 👋`;
+            
+            document.getElementById('walletAddress').textContent = data.userAddress || 'Not available';
+            document.getElementById('userEmail').textContent = data.jwtClaims?.email || 'Not available';
+            document.getElementById('sessionStatus').textContent = 'Authenticated';
+            
+            // Show copy button for wallet address if available
+            if (data.userAddress) {
+                document.getElementById('copyWallet').style.display = 'inline-block';
+                
+                // Fetch and display SUI balance
+                fetchSuiBalance(data.userAddress);
+                
+                // Show NFT section and load NFTs
+                document.getElementById('nftContainer').classList.add('show');
+                loadUserNFTs();
+            }
+        }
+
+        async function handleMint() {
+            if (!selectedFile || !sessionId) return;
+
+            try {
+                showStatus('Uploading image and minting NFT...', 'loading');
+                mintBtn.disabled = true;
+
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+                formData.append('sessionId', sessionId);
+                formData.append('name', nftNameInput.value.trim());
+                formData.append('description', nftDescriptionInput.value.trim());
+
+                const response = await fetch('/api/mint-nft-register', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                // Update last transaction
+                const digest = result.transactionDigest || result.digest;
+                if (digest) {
+                    const explorerUrl = `https://suiexplorer.com/txblock/${digest}?network=devnet`;
+                    document.getElementById('lastTransaction').innerHTML = 
+                        `<a href="${explorerUrl}" target="_blank" class="transaction-link">${digest.substring(0, 20)}...</a>`;
+                    
+                    // Show copy button for transaction if digest is available
+                    document.getElementById('copyTransaction').style.display = 'inline-block';
+                }
+
+                showStatus('🎉 NFT minted successfully! Gas fees were sponsored.', 'success');
+
+                // Reset form
+                resetForm();
+                
+                // Refresh balance and NFT gallery after successful mint
+                const walletAddress = document.getElementById('walletAddress').textContent;
+                if (walletAddress && walletAddress !== 'Not available') {
+                    setTimeout(() => {
+                        fetchSuiBalance(walletAddress); // Refresh balance since gas was consumed
+                        loadUserNFTs();
+                    }, 2000);
+                }
+
+            } catch (error) {
+                showStatus(`Minting error: ${error.message}`, 'error');
+                mintBtn.disabled = false;
+            }
+        }
+
+        function resetForm() {
+            selectedFile = null;
+            fileInput.value = '';
+            nftNameInput.value = '';
+            nftDescriptionInput.value = '';
+            imagePreview.style.display = 'none';
+            uploadArea.style.display = 'block';
+            mintBtn.disabled = true;
+        }
+
+        function removeImage() {
+            selectedFile = null;
+            fileInput.value = '';
+            imagePreview.style.display = 'none';
+            uploadArea.style.display = 'block';
+            checkMintButtonState();
+            showStatus('Image removed. You can upload a new one.', 'success');
+        }
+
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            if (text === 'Not connected' || text === 'No transactions yet') {
+                return;
+            }
+            
+            navigator.clipboard.writeText(text).then(() => {
+                // Show feedback
+                const copyBtn = elementId === 'walletAddress' ? 
+                    document.getElementById('copyWallet') : 
+                    document.getElementById('copyTransaction');
+                
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅';
+                copyBtn.style.background = 'rgba(76, 175, 80, 0.3)';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+                }, 1000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        // SUI Balance Function
+        async function fetchSuiBalance(address) {
+            try {
+                console.log('Fetching SUI balance for address:', address);
+                
+                const response = await fetch('https://fullnode.testnet.sui.io:443', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'suix_getBalance',
+                        params: [address, '0x2::sui::SUI']
+                    })
+                });
+
+                const data = await response.json();
+                console.log('SUI balance response:', data);
+
+                if (data.result) {
+                    const balance = data.result.totalBalance;
+                    const suiBalance = (parseInt(balance) / 1000000000).toFixed(4); // Convert from MIST to SUI
+                    document.getElementById('suiBalanceAsset').textContent = `${suiBalance} SUI`;
+                } else {
+                    console.log('No balance result, setting to 0.0000 SUI');
+                    document.getElementById('suiBalanceAsset').textContent = '0.0000 SUI';
+                }
+            } catch (error) {
+                console.error('Error fetching SUI balance:', error);
+                document.getElementById('suiBalanceAsset').textContent = 'Error loading';
+            }
+        }
+
+        // NFT Gallery Functions
+        async function loadUserNFTs() {
+            const walletAddress = document.getElementById('walletAddress').textContent;
+            if (!walletAddress || walletAddress === 'Not available') {
+                return;
+            }
+
+            const nftContainer = document.getElementById('nftGallery');
+            nftContainer.innerHTML = '<div class="nft-loading">Loading NFTs...</div>';
+
+            try {
+                let nfts = await getUserNFTs(walletAddress);
+                
+                // If no NFTs found with specific filter, try fetching all NFTs as fallback
+                if (nfts.length === 0) {
+                    console.log('🔄 No NFTs found with specific filter, trying to fetch all NFTs...');
+                    nfts = await getAllUserNFTs(walletAddress);
+                }
+                
+                displayNFTs(nfts);
+            } catch (error) {
+                console.error('Error loading NFTs:', error);
+                nftContainer.innerHTML = '<div class="nft-empty">Failed to load NFTs</div>';
+            }
+        }
+
+        async function getUserNFTs(address) {
+            const packageId = '0x87012e0f4ad715c96399d5bcbeeebd2d266f225e7dda89305758996c208a7cca';
+            console.log('🔍 Fetching NFTs for address:', address);
+            console.log('📦 Using package ID:', packageId);
+            console.log('🎯 Looking for struct type:', `${packageId}::photo_nft::PhotoNFT`);
+            
+            const response = await fetch('https://fullnode.testnet.sui.io:443', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'suix_getOwnedObjects',
+                    params: [
+                        address,
+                        {
+                            filter: {
+                                StructType: `${packageId}::photo_nft::PhotoNFT`
+                            },
+                            options: {
+                                showType: true,
+                                showContent: true,
+                                showDisplay: true
+                            }
+                        }
+                    ]
+                })
+            });
+
+            const data = await response.json();
+            console.log('📊 NFT fetch response:', data);
+            
+            if (data.error) {
+                console.error('❌ NFT fetch error:', data.error);
+                throw new Error(`NFT fetch failed: ${data.error.message}`);
+            }
+            
+            const nfts = data.result?.data || [];
+            console.log('🎨 Found NFTs:', nfts.length);
+            
+            return nfts;
+        }
+
+        async function getAllUserNFTs(address) {
+            console.log('🔍 Fetching ALL NFTs for address:', address);
+            
+            const response = await fetch('https://fullnode.testnet.sui.io:443', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'suix_getOwnedObjects',
+                    params: [
+                        address,
+                        {
+                            options: {
+                                showType: true,
+                                showContent: true,
+                                showDisplay: true
+                            }
+                        }
+                    ]
+                })
+            });
+
+            const data = await response.json();
+            console.log('📊 All objects fetch response:', data);
+            
+            if (data.error) {
+                console.error('❌ All objects fetch error:', data.error);
+                throw new Error(`All objects fetch failed: ${data.error.message}`);
+            }
+            
+            const allObjects = data.result?.data || [];
+            console.log('📦 Total objects found:', allObjects.length);
+            
+            // Filter for PhotoNFT objects
+            const packageId = '0x87012e0f4ad715c96399d5bcbeeebd2d266f225e7dda89305758996c208a7cca';
+            const nfts = allObjects.filter(obj => {
+                const type = obj.data?.type;
+                const isPhotoNFT = type && type.includes('PhotoNFT');
+                const isFromOurPackage = type && type.includes(packageId);
+                console.log('🔍 Object type:', type, 'isPhotoNFT:', isPhotoNFT, 'isFromOurPackage:', isFromOurPackage);
+                return isPhotoNFT || isFromOurPackage;
+            });
+            
+            console.log('🎨 Filtered NFTs found:', nfts.length);
+            return nfts;
+        }
+
+        function displayNFTs(nfts) {
+            const nftContainer = document.getElementById('nftGallery');
+            
+            if (nfts.length === 0) {
+                nftContainer.innerHTML = '<div class="nft-empty">No NFTs found. Mint your first PhotoNFT!</div>';
+                return;
+            }
+
+            nftContainer.innerHTML = nfts.map(nft => {
+                const content = nft.data?.content?.fields || {};
+                const display = nft.data?.display?.data || {};
+                
+                const name = display.name || content.name || 'Unnamed NFT';
+                const description = display.description || content.description || 'No description';
+                const imageUrl = display.image_url || content.image_url || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNzBjLTguMjg0IDAtMTUgNi43MTYtMTUgMTVzNi43MTYgMTUgMTUgMTUgMTUtNi43MTYgMTUtMTUtNi43MTYtMTUtMTUtMTV6bTAgMjBjLTIuNzYxIDAtNS0yLjIzOS01LTVzMi4yMzktNSA1LTUgNSAyLjIzOSA1IDUtMi4yMzkgNS01IDV6IiBmaWxsPSIjOWNhM2FmIi8+CjxwYXRoIGQ9Ik0xNTAgNTBINTBjLTUuNTIzIDAtMTAgNC40NzctMTAgMTB2ODBjMCA1LjUyMyA0LjQ3NyAxMCAxMCAxMGgxMDBjNS41MjMgMCAxMC00LjQ3NyAxMC0xMFY2MGMwLTUuNTIzLTQuNDc3LTEwLTEwLTEwem0wIDkwSDUwVjYwaDEwMHY4MHoiIGZpbGw9IiM5Y2EzYWYiLz4KPC9zdmc+';
+                const objectId = nft.data?.objectId || '';
+
+                return `
+                    <div class="nft-item" onclick="showNFTDetails('${objectId}', '${name.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${imageUrl}')">
+                        <img class="nft-image" src="${imageUrl}" alt="${name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNzBjLTguMjg0IDAtMTUgNi43MTYtMTUgMTVzNi43MTYgMTUgMTUgMTUgMTUtNi43MTYgMTUtMTUtNi43MTYtMTUtMTUtMTV6bTAgMjBjLTIuNzYxIDAtNS0yLjIzOS01LTVzMi4yMzktNSA1LTUgNSAyLjIzOSA1IDUtMi4yMzkgNS01IDV6IiBmaWxsPSIjOWNhM2FmIi8+CjxwYXRoIGQ9Ik0xNTAgNTBINTBjLTUuNTIzIDAtMTAgNC40NzctMTAgMTB2ODBjMCA1LjUyMyA0LjQ3NyAxMCAxMCAxMGgxMDBjNS41MjMgMCAxMC00LjQ3NyAxMC0xMFY2MGMwLTUuNTIzLTQuNDc3LTEwLTEwLTEwem0wIDkwSDUwVjYwaDEwMHY4MHoiIGZpbGw9IiM5Y2EzYWYiLz4KPC9zdmc+'">
+                        <div class="nft-info">
+                            <div class="nft-name">${name}</div>
+                            <div class="nft-description">${description.length > 30 ? description.substring(0, 30) + '...' : description}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showNFTDetails(objectId, name, description, imageUrl) {
+            document.getElementById('modalNFTImage').src = imageUrl;
+            document.getElementById('modalNFTName').textContent = name;
+            document.getElementById('modalNFTDescription').textContent = description;
+            document.getElementById('modalNFTId').textContent = objectId;
+            document.getElementById('nftModal').style.display = 'flex';
+        }
+
+        function closeNFTModal() {
+            document.getElementById('nftModal').style.display = 'none';
+        }
+
+        function refreshNFTs() {
+            loadUserNFTs();
+        }
+
+        function refreshAssets() {
+            const walletAddress = document.getElementById('walletAddress').textContent;
+            if (walletAddress && walletAddress !== 'Not available') {
+                // Refresh SUI balance
+                document.getElementById('suiBalanceAsset').textContent = 'Loading...';
+                fetchSuiBalance(walletAddress);
+                
+                // Refresh NFTs
+                loadUserNFTs();
+                
+                showStatus('Refreshing assets...', 'loading');
+                setTimeout(() => {
+                    showStatus('Assets refreshed!', 'success');
+                }, 1500);
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('nftModal');
+            if (event.target === modal) {
+                closeNFTModal();
+            }
+        }
+
+        // Check authentication status on page load
+        checkAuthStatus();
+
+        // Camera functions
+        async function handleCameraClick() {
+            if (isCameraActive) {
+                stopCamera();
+            } else {
+                await startCamera();
+            }
+        }
+
+        async function startCamera() {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    } 
+                });
+                
+                cameraVideo.srcObject = cameraStream;
+                cameraVideo.style.display = 'block';
+                
+                // Add camera controls
+                const cameraControls = document.createElement('div');
+                cameraControls.className = 'camera-controls';
+                cameraControls.innerHTML = `
+                    <button class="camera-control-btn capture-btn" onclick="capturePhoto()">📸 Capture</button>
+                    <button class="camera-control-btn" onclick="stopCamera()">❌ Cancel</button>
+                `;
+                
+                // Insert controls after video
+                cameraVideo.parentNode.insertBefore(cameraControls, cameraVideo.nextSibling);
+                
+                isCameraActive = true;
+                document.getElementById('cameraBtn').textContent = '❌ Stop Camera';
+                
+                showStatus('Camera started! Click capture to take a photo.', 'success');
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                showStatus('Unable to access camera. Please check permissions.', 'error');
+            }
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            
+            cameraVideo.style.display = 'none';
+            cameraVideo.srcObject = null;
+            
+            // Remove camera controls
+            const controls = document.querySelector('.camera-controls');
+            if (controls) {
+                controls.remove();
+            }
+            
+            isCameraActive = false;
+            document.getElementById('cameraBtn').textContent = '📷 Take Photo';
+            
+            showStatus('Camera stopped.', 'success');
+        }
+
+        function capturePhoto() {
+            if (!cameraStream) return;
+            
+            const context = cameraCanvas.getContext('2d');
+            cameraCanvas.width = cameraVideo.videoWidth;
+            cameraCanvas.height = cameraVideo.videoHeight;
+            
+            // Draw the video frame to canvas
+            context.drawImage(cameraVideo, 0, 0);
+            
+            // Convert canvas to blob
+            cameraCanvas.toBlob((blob) => {
+                // Create a file from the blob
+                const file = new File([blob], `camera-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+                
+                // Handle the captured file
+                handleFile(file);
+                
+                // Stop camera after capture
+                stopCamera();
+                
+                // Show warning about permanent upload instead of success message
+                showStatus('⚠️ Warning: This selfie will be permanently uploaded to the blockchain and visible to everyone!', 'warning');
+            }, 'image/jpeg', 0.8);
+        }
+    </script>
+</body>
+</html>

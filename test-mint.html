@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFT Mint Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.3);
+        }
+        .error {
+            background: rgba(244, 67, 54, 0.3);
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 NFT Mint and Wallet Registration Test</h1>
+        
+        <div class="step">
+            <h3>Step 1: Initialize zkLogin Session</h3>
+            <button onclick="initSession()">Initialize Session</button>
+            <div id="sessionResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Generate Key Pair</h3>
+            <button onclick="generateKeys()" id="generateKeysBtn" disabled>Generate Keys</button>
+            <div id="keysResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Prepare JWT</h3>
+            <button onclick="prepareJWT()" id="prepareJWTBtn" disabled>Prepare JWT</button>
+            <div id="jwtResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 4: OAuth Login</h3>
+            <p>Click the link below to perform Google OAuth login:</p>
+            <a id="oauthLink" href="#" target="_blank" style="color: #FFD700;">Waiting for OAuth URL...</a>
+            <div id="oauthResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 5: Process JWT (Manual input after login)</h3>
+            <input type="text" id="jwtToken" placeholder="Paste JWT token from OAuth callback">
+            <button onclick="processJWT()" id="processJWTBtn" disabled>Process JWT</button>
+            <div id="processResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 6: Generate zkProof</h3>
+            <button onclick="generateZkProof()" id="generateZkProofBtn" disabled>Generate zkProof</button>
+            <div id="zkProofResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 7: Mint NFT and Register Wallet</h3>
+            <button onclick="mintNFT()" id="mintNFTBtn" disabled>Mint NFT Register Wallet</button>
+            <div id="mintResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 8: Check Registration Status</h3>
+            <button onclick="checkStatus()" id="checkStatusBtn" disabled>Check Registration Status</button>
+            <div id="statusResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        let zkProof = null;
+
+        async function initSession() {
+            try {
+                const response = await fetch('/api/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                
+                const data = await response.json();
+                document.getElementById('sessionResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success) {
+                    sessionId = data.sessionId;
+                    document.getElementById('generateKeysBtn').disabled = false;
+                    document.getElementById('sessionResult').className = 'result success';
+                } else {
+                    document.getElementById('sessionResult').className = 'result error';
+                }
+            } catch (error) {
+                document.getElementById('sessionResult').textContent = 'Error: ' + error.message;
+                document.getElementById('sessionResult').className = 'result error';
+            }
+        }
+
+        async function generateKeys() {
+            try {
+                const response = await fetch('/api/generate-keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                
+                const data = await response.json();
+                document.getElementById('keysResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success) {
+                    document.getElementById('prepareJWTBtn').disabled = false;
+                    document.getElementById('keysResult').className = 'result success';
+                } else {
+                    document.getElementById('keysResult').className = 'result error';
+                }
+            } catch (error) {
+                document.getElementById('keysResult').textContent = 'Error: ' + error.message;
+                document.getElementById('keysResult').className = 'result error';
+            }
+        }
+
+        async function prepareJWT() {
+            try {
+                const response = await fetch('/api/prepare-jwt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                
+                const data = await response.json();
+                document.getElementById('jwtResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success) {
+                    document.getElementById('oauthLink').href = data.oauthUrl;
+                    document.getElementById('oauthLink').textContent = 'Click here for Google OAuth login';
+                    document.getElementById('processJWTBtn').disabled = false;
+                    document.getElementById('jwtResult').className = 'result success';
+                } else {
+                    document.getElementById('jwtResult').className = 'result error';
+                }
+            } catch (error) {
+                document.getElementById('jwtResult').textContent = 'Error: ' + error.message;
+                document.getElementById('jwtResult').className = 'result error';
+            }
+        }
+
+        async function processJWT() {
+            try {
+                const jwtToken = document.getElementById('jwtToken').value;
+                if (!jwtToken) {
+                    alert('Please enter JWT token');
+                    return;
+                }
+
+                const response = await fetch('/api/process-jwt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, jwtToken })
+                });
+                
+                const data = await response.json();
+                document.getElementById('processResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success) {
+                    document.getElementById('generateZkProofBtn').disabled = false;
+                    document.getElementById('processResult').className = 'result success';
+                } else {
+                    document.getElementById('processResult').className = 'result error';
+                }
+            } catch (error) {
+                document.getElementById('processResult').textContent = 'Error: ' + error.message;
+                document.getElementById('processResult').className = 'result error';
+            }
+        }
+
+        async function generateZkProof() {
+            try {
+                const response = await fetch('/api/generate-zkproof', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, network: 'testnet' })
+                });
+                
+                const data = await response.json();
+                document.getElementById('zkProofResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success) {
+                    zkProof = data.zkProof;
+                    document.getElementById('mintNFTBtn').disabled = false;
+                    document.getElementById('zkProofResult').className = 'result success';
+                } else {
+                    document.getElementById('zkProofResult').className = 'result error';
+                }
+            } catch (error) {
+                document.getElementById('zkProofResult').textContent = 'Error: ' + error.message;
+                document.getElementById('zkProofResult').className = 'result error';
+            }
+        }
+
+        async function mintNFT() {
+            try {
+                const response = await fetch('/api/mint-nft-register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        sessionId, 
+                        zkProof,
+                        nftMetadata: {
+                            name: 'Test zkLogin Wallet NFT',
+                            description: 'A test NFT for zkLogin wallet registration'
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('mintResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success) {
+                    document.getElementById('checkStatusBtn').disabled = false;
+                    document.getElementById('mintResult').className = 'result success';
+                } else {
+                    document.getElementById('mintResult').className = 'result error';
+                }
+            } catch (error) {
+                document.getElementById('mintResult').textContent = 'Error: ' + error.message;
+                document.getElementById('mintResult').className = 'result error';
+            }
+        }
+
+        async function checkStatus() {
+            try {
+                const response = await fetch(`/api/registration-status/${sessionId}`);
+                const data = await response.json();
+                document.getElementById('statusResult').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success) {
+                    document.getElementById('statusResult').className = 'result success';
+                } else {
+                    document.getElementById('statusResult').className = 'result error';
+                }
+            } catch (error) {
+                document.getElementById('statusResult').textContent = 'Error: ' + error.message;
+                document.getElementById('statusResult').className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>
