@@ -1,6 +1,8 @@
-# zkLogin NFT Platform
+# ZKmint
 
-A complete zkLogin implementation with NFT minting capabilities on the Sui blockchain. This platform allows users to authenticate using Google OAuth and mint photo NFTs without needing to manage private keys directly.
+**Mint your art, powered by Zero-Knowledge.**
+
+A privacy-first NFT minting tool for artists. ZKmint combines zkLogin authentication with NFT minting capabilities on the Sui blockchain, allowing users to authenticate using Google OAuth and mint photo NFTs without needing to manage private keys directly.
 
 ## 🚀 Features
 
@@ -62,7 +64,7 @@ Before starting, ensure you have:
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd zklogin-nft-platform
+cd zkmint
 
 # Install all dependencies
 npm install
