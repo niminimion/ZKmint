@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZKmint</title>
+    <link rel="icon" href="/logo.png" type="image/png" />
     <style>
         * {
             margin: 0;
@@ -328,8 +329,10 @@
         .mint-subtitle {
             color: #ffffff;
             margin-bottom: 15px;
-            font-size: 14px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.9);
         }
 
         .upload-area {
@@ -885,7 +888,9 @@
 </head>
 <body>
     <header class="header">
-        <div class="logo">🎨 ZKmint</div>
+        <div class="logo" style="display:flex;align-items:center;gap:10px;">
+            <img src="/title.jpg" alt="ZKmint" style="height:56px;width:auto;display:block;"/>
+        </div>
         <button id="googleSignIn" class="google-signin">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -932,8 +937,7 @@
         </div>
 
         <div class="mint-container">
-            <h1 class="mint-title">Mint your art, powered by Zero-Knowledge.</h1>
-            <p class="mint-subtitle">A privacy-first NFT minting tool for artists.</p>
+            <p class="mint-subtitle">Mint your art, powered by Zero-Knowledge.</p>
 
             <div class="upload-area" id="uploadArea">
                 <div class="upload-icon">📸</div>

@@ -19,7 +19,6 @@ const {
 } = require('@mysten/sui/zklogin');
 const crypto = require('crypto');
 const { SuiClient } = require('@mysten/sui/client');
-const { UserSaltDatabase } = require('./database');
 const { Transaction } = require('@mysten/sui/transactions');
 
 /**
@@ -63,6 +62,7 @@ class ZkLogin {
             clientId: config.clientId,
             redirectUrl: config.redirectUrl,
             keyScheme: config.keyScheme || 'ED25519',
+            oauthFlow: config.oauthFlow || 'implicit',
             maxEpoch: config.maxEpoch || 10,
             userSalt: config.userSalt || '0',
             useDatabase: config.useDatabase || false,
@@ -82,8 +82,9 @@ class ZkLogin {
 
         this.suiClient = new SuiClient({ url: this.config.suiRpcUrl });
         
-        // Initialize database if enabled
+        // Initialize database if enabled (lazy require to avoid bundling sqlite in serverless)
         if (this.config.useDatabase) {
+            const { UserSaltDatabase } = require('./database');
             this.saltDatabase = new UserSaltDatabase(this.config.dbPath);
         }
         
@@ -239,18 +240,20 @@ class ZkLogin {
         const provider = PROVIDERS[this.config.provider];
         
         const state = sessionId || `zklogin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        // For Google OAuth implicit flow to get id_token directly
+        const isCodeFlow = (this.config.oauthFlow || 'implicit') === 'code';
         const params = new URLSearchParams({
             client_id: this.config.clientId,
             redirect_uri: this.config.redirectUrl,
-            response_type: 'id_token',
+            response_type: isCodeFlow ? 'code' : 'id_token',
             scope: 'openid email profile',
-            nonce: this.nonce,
             state: state,
-            response_mode: 'fragment'
+            // implicit uses fragment, code flow uses query
+            response_mode: isCodeFlow ? 'query' : 'fragment'
         });
-
+        if (!isCodeFlow) {
+            // nonce only applies to implicit id_token flow
+            params.set('nonce', this.nonce);
+        }
         return `${provider.authUrl}?${params.toString()}`;
     }
 

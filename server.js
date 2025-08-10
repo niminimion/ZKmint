@@ -1031,12 +1031,11 @@ app.get('/callback', (req, res) => {
         <!DOCTYPE html>
         <html>
         <head>
-            <title>zkLogin - Signing In...</title>
+            <title>zkLogin OAuth Callback</title>
             <style>
                 body { 
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    margin: 0;
-                    padding: 0;
+                    font-family: Arial, sans-serif; 
+                    margin: 40px; 
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color: white;
                     min-height: 100vh;
@@ -1047,71 +1046,52 @@ app.get('/callback', (req, res) => {
                 }
                 .container {
                     background: rgba(255, 255, 255, 0.1);
-                    padding: 40px;
-                    border-radius: 20px;
-                    backdrop-filter: blur(15px);
+                    padding: 30px;
+                    border-radius: 15px;
+                    backdrop-filter: blur(10px);
                     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
                     border: 1px solid rgba(255, 255, 255, 0.18);
-                    max-width: 400px;
+                    max-width: 600px;
                     text-align: center;
                 }
-                .spinner {
-                    width: 50px;
-                    height: 50px;
-                    border: 4px solid rgba(255, 255, 255, 0.3);
-                    border-top: 4px solid #4ade80;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                    margin: 20px auto;
-                }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
+                .token { 
+                    word-break: break-all; 
+                    background: rgba(0, 0, 0, 0.2); 
+                    padding: 15px; 
+                    margin: 15px 0; 
+                    border-radius: 8px;
+                    font-family: monospace;
+                    font-size: 12px;
+                    max-height: 200px;
+                    overflow-y: auto;
                 }
                 .success { color: #4ade80; }
                 .error { color: #f87171; }
-                .message {
-                    font-size: 18px;
-                    margin: 20px 0;
-                    font-weight: 500;
-                }
+                .info { color: #60a5fa; }
+                .loading { color: #fbbf24; }
                 .btn {
                     background: #4ade80;
                     color: white;
                     border: none;
-                    padding: 12px 24px;
-                    border-radius: 8px;
+                    padding: 10px 20px;
+                    border-radius: 5px;
                     cursor: pointer;
                     margin: 10px;
-                    font-size: 16px;
-                    font-weight: 500;
-                    transition: all 0.2s;
+                    font-size: 14px;
                 }
-                .btn:hover { 
-                    background: #22c55e; 
-                    transform: translateY(-1px);
-                }
-                .error-details {
-                    background: rgba(248, 113, 113, 0.1);
-                    border: 1px solid rgba(248, 113, 113, 0.3);
-                    border-radius: 8px;
-                    padding: 15px;
-                    margin: 15px 0;
-                    text-align: left;
-                }
+                .btn:hover { background: #22c55e; }
+                .btn:disabled { background: #6b7280; cursor: not-allowed; }
             </style>
         </head>
         <body>
             <div class="container">
-                <div id="loading-state">
-                    <div class="spinner"></div>
-                    <h2>🔐 Completing Sign In...</h2>
-                    <p class="message">Please wait while we securely process your authentication.</p>
-                </div>
-                
-                <div id="error-state" style="display: none;">
-                    <h2 class="error">❌ Sign In Failed</h2>
-                    <div id="error-content"></div>
+                <h1 id="status" class="loading">🔄 Processing OAuth Response...</h1>
+                <div id="content"></div>
+                <div id="token-display" style="display: none;">
+                    <p class="info">JWT Token received:</p>
+                    <div class="token" id="token-content"></div>
+                    <button class="btn" onclick="copyToken()">📋 Copy Token</button>
+                    <button class="btn" onclick="returnToApp()">🏠 Return to App</button>
                 </div>
             </div>
 
@@ -1127,45 +1107,67 @@ app.get('/callback', (req, res) => {
                     };
                 }
 
-                function showError(error, description) {
-                    document.getElementById('loading-state').style.display = 'none';
-                    document.getElementById('error-state').style.display = 'block';
-                    
-                    document.getElementById('error-content').innerHTML = \`
-                        <div class="error-details">
-                            <p><strong>Error:</strong> \${error}</p>
-                            \${description ? \`<p><strong>Description:</strong> \${description}</p>\` : ''}
-                        </div>
-                        <p>This might be due to:</p>
-                        <ul>
-                            <li>Network connectivity issues</li>
-                            <li>OAuth configuration problems</li>
-                            <li>Browser security settings</li>
-                        </ul>
-                        <button class="btn" onclick="window.location.href='/'">🏠 Return to App</button>
-                        <button class="btn" onclick="window.location.reload()">🔄 Try Again</button>
-                    \`;
+                function copyToken() {
+                    const token = document.getElementById('token-content').textContent;
+                    navigator.clipboard.writeText(token).then(() => {
+                        alert('JWT token copied to clipboard!');
+                    }).catch(err => {
+                        console.error('Failed to copy token:', err);
+                    });
                 }
 
-                function completeSignIn(token, state) {
-                    // Store token securely for the main app
+                function returnToApp() {
+                    const token = document.getElementById('token-content').textContent;
+                    const state = parseFragment().state;
+                    
+                    // Store token in sessionStorage for the main app to pick up
                     sessionStorage.setItem('zklogin_jwt', token);
                     sessionStorage.setItem('zklogin_state', state);
                     
-                    // Immediately redirect back to main app
+                    // Redirect back to main app
                     window.location.href = '/';
                 }
 
-                // Process the OAuth response immediately
+                // Process the OAuth response
                 const params = parseFragment();
+                const statusEl = document.getElementById('status');
+                const contentEl = document.getElementById('content');
+                const tokenDisplayEl = document.getElementById('token-display');
+                const tokenContentEl = document.getElementById('token-content');
 
                 if (params.error) {
-                    showError(params.error, params.error_description);
+                    statusEl.className = 'error';
+                    statusEl.textContent = '❌ OAuth Authentication Failed';
+                    contentEl.innerHTML = \`
+                        <p><strong>Error:</strong> \${params.error}</p>
+                        <p><strong>Description:</strong> \${params.error_description || 'Unknown error'}</p>
+                        <button class="btn" onclick="window.location.href='/'">🏠 Return to App</button>
+                    \`;
                 } else if (params.id_token) {
-                    // Success - complete sign in immediately without showing token
-                    completeSignIn(params.id_token, params.state);
+                    statusEl.className = 'success';
+                    statusEl.textContent = '✅ OAuth Authentication Successful';
+                    tokenContentEl.textContent = params.id_token;
+                    tokenDisplayEl.style.display = 'block';
+                    
+                    // Auto-return to app after 3 seconds
+                    setTimeout(() => {
+                        returnToApp();
+                    }, 3000);
+                    
+                    contentEl.innerHTML = '<p class="info">Automatically returning to app in 3 seconds...</p>';
                 } else {
-                    showError('Missing ID Token', 'No authentication token was received from the OAuth provider.');
+                    statusEl.className = 'error';
+                    statusEl.textContent = '❌ Missing ID Token';
+                    contentEl.innerHTML = \`
+                        <p>No id_token found in the OAuth response.</p>
+                        <p>This might be due to:</p>
+                        <ul style="text-align: left;">
+                            <li>Incorrect OAuth configuration</li>
+                            <li>Client ID not configured for implicit flow</li>
+                            <li>Redirect URI mismatch</li>
+                        </ul>
+                        <button class="btn" onclick="window.location.href='/'">🏠 Return to App</button>
+                    \`;
                 }
             </script>
         </body>
